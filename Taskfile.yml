@@ -1,0 +1,47 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  pre:build:
+    silent: true
+    cmds:
+      - task: pre:build:{{OS}}
+  pre:build:windows:
+    silent: true
+    internal: true
+    cmds:
+      - pwsh -NoProfile -Command "mkdir bin -Force | Out-Null"
+  build:
+    generates:
+      - bin/krobe.exe
+    sources:
+      - c/tcp_wrapper.c
+      - /**/*.odin
+    cmds:
+      - task: build:c
+      - odin build . -out:bin/krobe{{exeExt}} -o:speed
+  run:
+    cmds:
+      - task: build:c
+      - odin run .
+      - task: del:temp:{{OS}}
+  del:temp:windows:
+    silent: true
+    internal: true
+    cmds:
+      - pwsh -NoProfile -Command "del krobe{{exeExt}}"
+  build:c:
+    silent: true
+    cmds:
+      - task: pre:build # the pre build is here, since building odin already always executes this and we don't need to decouple it
+      - task: build:c:{{OS}}
+  build:c:windows:
+    silent: true
+    internal: true
+    generates:
+      - bin/krobe.lib
+    sources:
+      - c/tcp_wrapper.c
+    cmds:
+      - pwsh -NoProfile -ExecutionPolicy Bypass -File "./win_devenv.ps1" -BuildCommand "cl /nologo /c /EHsc /O2 /DWIN32 /D_WINDOWS /D_WINSOCK_DEPRECATED_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS {{.USER_WORKING_DIR}}\c\tcp_wrapper.c /Fo:{{.USER_WORKING_DIR}}\bin\lib.obj && lib /nologo /OUT:{{.USER_WORKING_DIR}}\bin\krobe.lib {{.USER_WORKING_DIR}}\bin\lib.obj && del {{.USER_WORKING_DIR}}\bin\lib.obj" -DevShellArch "amd64"
