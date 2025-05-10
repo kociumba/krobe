@@ -66,7 +66,7 @@ main :: proc() {
 			if r == nil {
 				continue
 			}
-			fmt.printf("port: %#v, pid: %#v, path: %#v\n", conn.local_port, conn.pid, r)
+			fmt.printf("port: %#v, pid: %#v (handle: %#v), path: %#v\n", conn.local_port, conn.pid, tcp.get_hwnd(conn.pid), r)
 		}
 	}
 }
