@@ -18,13 +18,14 @@ tasks:
     sources:
       - c/tcp_wrapper.c
       - /**/*.odin
+      - krobe.rc
     cmds:
       - task: build:c
-      - odin build . -out:bin/krobe{{exeExt}} -o:speed
+      - odin build . -out:bin/krobe{{exeExt}} -o:speed -resource:krobe.rc
   run:
     cmds:
       - task: build:c
-      - odin run .
+      - odin run . -resource:krobe.rc
       - task: del:temp:{{OS}}
   del:temp:windows:
     silent: true

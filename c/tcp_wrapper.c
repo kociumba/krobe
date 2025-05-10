@@ -8,6 +8,19 @@
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 
+#define TCP_STATE_CLOSED        1
+#define TCP_STATE_LISTEN        2
+#define TCP_STATE_SYN_SENT      3
+#define TCP_STATE_SYN_RCVD      4
+#define TCP_STATE_ESTAB         5
+#define TCP_STATE_FIN_WAIT1     6
+#define TCP_STATE_FIN_WAIT2     7
+#define TCP_STATE_CLOSE_WAIT    8
+#define TCP_STATE_CLOSING       9
+#define TCP_STATE_LAST_ACK      10
+#define TCP_STATE_TIME_WAIT     11
+#define TCP_STATE_DELETE_TCB    12
+
 // structure returned to odin
 typedef struct {
     DWORD state;          // TCP connection state
@@ -49,34 +62,28 @@ __declspec(dllexport) TcpConnections* get_tcp_connections() {
     DWORD dwSize = 0;
     DWORD dwRetVal = 0;
     
-    // Initialize dynamic memory for the connections
     TcpConnections* result = (TcpConnections*)malloc(sizeof(TcpConnections));
     if (!result) return NULL;
     
     result->count = 0;
     result->connections = NULL;
 
-    // Make initial call to GetExtendedTcpTable to get required buffer size
     dwRetVal = GetExtendedTcpTable(NULL, &dwSize, TRUE, AF_INET, 
                                   TCP_TABLE_OWNER_PID_ALL, 0);
     
     if (dwRetVal == ERROR_INSUFFICIENT_BUFFER) {
-        // Allocate memory for the table
         pTcpTable = (PMIB_TCPTABLE_OWNER_PID)malloc(dwSize);
         if (pTcpTable == NULL) {
             free(result);
             return NULL;
         }
 
-        // Make the actual call to GetExtendedTcpTable
         dwRetVal = GetExtendedTcpTable(pTcpTable, &dwSize, TRUE, AF_INET,
                                       TCP_TABLE_OWNER_PID_ALL, 0);
         
         if (dwRetVal == NO_ERROR) {
-            // Get the number of entries
             result->count = pTcpTable->dwNumEntries;
             
-            // Allocate memory for connection info
             result->connections = (TcpConnectionInfo*)malloc(
                 result->count * sizeof(TcpConnectionInfo));
                 
@@ -86,7 +93,6 @@ __declspec(dllexport) TcpConnections* get_tcp_connections() {
                 return NULL;
             }
             
-            // Copy the data from the TCP table to our simpler structure
             for (DWORD i = 0; i < result->count; i++) {
                 result->connections[i].state = pTcpTable->table[i].dwState;
                 result->connections[i].local_addr = pTcpTable->table[i].dwLocalAddr;
@@ -106,12 +112,10 @@ __declspec(dllexport) TcpConnections* get_tcp_connections() {
 
 // Function to release the memory allocated by get_tcp_connections
 __declspec(dllexport) void free_tcp_connections(TcpConnections* connections) {
-    if (connections) {
-        // Free the array of connections
+    if (connections) {  
         if (connections->connections) {
             free(connections->connections);
         }
-        // Free the main structure
         free(connections);
     }
 }

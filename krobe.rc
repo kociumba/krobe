@@ -1,0 +1,46 @@
+
+#include "winres.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
+#pragma code_page(1252)
+
+#define IDI_ICON1                       101
+
+#define Q(x) #x
+#define QUOTE(x) Q(x)
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,0,0,0
+ PRODUCTVERSION 0,0,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080904b0"
+        BEGIN
+            VALUE "CompanyName", "https://github.com/kociumba/krobe"
+            VALUE "FileDescription", "krobe"
+            VALUE "FileVersion", "0.0.0.0"
+            VALUE "InternalName", "krobe.exe"
+            VALUE "LegalCopyright", "Copyright (c) 2025"
+            VALUE "OriginalFilename", "krobe.exe"
+            VALUE "ProductName", "krobe - display info about open tcp connections"
+            VALUE "ProductVersion", "0.0.0.0"
+            VALUE "Comments", "krobe let's you easely query and display which processes and applications are creating open tcp connections"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x809, 1200
+    END
+END
+
+IDI_ICON1   ICON    "assets\\krobe.ico"
