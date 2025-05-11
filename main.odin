@@ -56,19 +56,20 @@ has_flag :: proc(flag: string) -> bool {
 
 // the struct outputed in an array when -json is set
 json_out :: struct {
-	port:   int,
-	pid:    int,
-	handle: int,
-	path:   string,
+	port:  int,
+	pid:   int,
+	title: Maybe(string),
+	path:  string,
 }
 
 main :: proc() {
 	defer free_all(context.allocator)
 
-    // disable logging when json output is enabled for an uninterrupted json stream
+	l := log.create_console_logger(log.Level.Info)
+	context.logger = l
+	// disable logging when json output is enabled for an uninterrupted json stream
 	if !has_flag("-json") {
-		l := log.create_console_logger()
-		context.logger = l
+        context.logger = log.create_console_logger(log.Level.Fatal)
 	}
 
 	connections := tcp.get_tcp_connections()
@@ -84,7 +85,7 @@ main :: proc() {
 	defer delete(json_struct)
 
 	for conn in conn_slice {
-		if conn.pid == 4 {continue} // system process, skip it for now even tho many sevices run under it
+		if conn.pid == 4 {continue} 	// system process, skip it for now even tho many sevices run under it
 		if conn.state == tcp.TCP_STATE_LISTEN || conn.state == tcp.TCP_STATE_ESTAB {
 			r := tcp.get_proc_info(conn.pid)
 			if r == nil {
@@ -99,16 +100,16 @@ main :: proc() {
 					json_out {
 						port = int(conn.local_port),
 						pid = int(conn.pid),
-						handle = int(uintptr(tcp.get_hwnd(conn.pid))),
+						title = tcp.get_window_title(tcp.get_hwnd(conn.pid)),
 						path = r.?,
 					},
 				)
 			} else {
 				fmt.printf(
-					"port: %#v, pid: %#v (handle: %#v), path: %#v\n",
+					"port: %#v, pid: %#v (title: %#v), path: %#v\n",
 					conn.local_port,
 					conn.pid,
-					uintptr(tcp.get_hwnd(conn.pid)),
+					tcp.get_window_title(tcp.get_hwnd(conn.pid)).? or_else "[no window]",
 					r,
 				)
 			}

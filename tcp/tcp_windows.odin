@@ -5,7 +5,7 @@ import "core:log"
 import "core:slice"
 import "core:strings"
 import win "core:sys/windows"
- 
+
 TcpConnectionInfo :: struct {
 	state:       win.DWORD, // TCP connection state
 	local_addr:  win.DWORD, // Local address in network byte order
@@ -41,7 +41,7 @@ foreign lib {
 	get_tcp_connections :: proc() -> ^TcpConnections ---
 	free_tcp_connections :: proc(connections: ^TcpConnections) ---
 	print_tcp_connections :: proc(connections: ^TcpConnections) ---
-    get_hwnd :: proc(process_id: win.DWORD) -> win.HWND ---
+	get_hwnd :: proc(process_id: win.DWORD) -> win.HWND ---
 }
 foreign import kernel32 "system:kernel32.lib"
 foreign kernel32 {
@@ -176,7 +176,25 @@ get_win32_error_message :: proc(errorCode: win.DWORD) -> string {
 
 	win.LocalFree(cast(win.HANDLE)lpBuffer)
 
-    return strings.trim_space(message_utf8)
+	return strings.trim_space(message_utf8)
+}
+
+get_window_title :: proc(handle: win.HWND) -> Maybe(string) {
+	lpBuffer := make([]u16, 1024)
+    defer delete(lpBuffer)
+	len := win.GetWindowTextW(handle, slice.as_ptr(lpBuffer), 1024)
+	if len == 0 {
+        log.debug("could not get window title")
+		return nil
+	}
+
+	title_utf8, err := win.utf16_to_utf8(lpBuffer)
+    if err != nil {
+        log.error(err)
+        return nil
+    }
+
+    return strings.trim_space(title_utf8)
 }
 
 @(deprecated = "currently unused")
