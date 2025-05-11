@@ -1,22 +1,21 @@
 name: Build and Test
 
 on:
-    push:
-      branches: [ "main" ]
-      tags: [ "v*" ]
-    pull_request:
-      branches: [ "main" ]
-
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
   build:
     strategy:
       matrix:
         os: [
-          windows-latest, # only windows is supported for now
-          # ubuntu-latest, 
-          # macos-latest
-        ]
+            windows-latest, # only windows is supported for now
+            # ubuntu-latest,
+            # macos-latest
+          ]
 
     runs-on: ${{ matrix.os }}
 
