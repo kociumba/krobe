@@ -108,7 +108,7 @@ function Build-Component {
     )
     
     $compilerFlags = @(
-        "/nologo", "/c", "/EHsc", "/O2",
+        "/nologo", "/c", "/O2",
         "/DWIN32", "/D_WINDOWS",
         "/D_WINSOCK_DEPRECATED_NO_WARNINGS",
         "/D_CRT_SECURE_NO_WARNINGS"
