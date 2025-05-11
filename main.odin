@@ -81,7 +81,7 @@ get_connections :: proc(use_udp: bool) -> (result: Connections) {
 Options :: struct {
     use_udp: bool `args:"name=udp" usage:"if true, searches udp connections instead of tcp"`,
     use_full: bool `args:"name=full" usage:"if true, includes full absolute paths to found executables"`,
-    use_json: bool `args:"name=json" usage:"if true, outputs the data in a json format, for piping into other programs`
+    use_json: bool `args:"name=json" usage:"if true, outputs the data in a json format, for piping into other programs"`
 }
 
 opts: Options
