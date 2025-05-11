@@ -5,7 +5,7 @@ import "core:log"
 import "core:slice"
 import "core:strings"
 import win "core:sys/windows"
-
+ 
 TcpConnectionInfo :: struct {
 	state:       win.DWORD, // TCP connection state
 	local_addr:  win.DWORD, // Local address in network byte order
@@ -80,6 +80,7 @@ get_tcp_state_string :: proc(state: win.DWORD) -> string {
 	}
 }
 
+// decodes the u32 encoded ipv4 adress to a readable ip string
 ipv4_to_string :: proc(addr: win.DWORD) -> string {
 	bytes := [4]byte {
 		byte((addr) & 0xFF),
@@ -139,6 +140,7 @@ get_proc_info :: proc(pid: win.DWORD) -> Maybe(string) {
 	return string(r)
 }
 
+// shortcut utility to get a win32 error message as a string from a win32 error code
 get_win32_error_message :: proc(errorCode: win.DWORD) -> string {
 	// Flags for FormatMessage
 	flags: u32 =
