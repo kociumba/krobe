@@ -84,7 +84,7 @@ main :: proc() {
 	defer delete(json_struct)
 
 	for conn in conn_slice {
-		if conn.pid == 4 {continue} 	// system process, skip it for now even tho many sevices run under it
+		if conn.pid == 4 {continue} // system process, skip it for now even tho many sevices run under it
 		if conn.state == tcp.TCP_STATE_LISTEN || conn.state == tcp.TCP_STATE_ESTAB {
 			r := tcp.get_proc_info(conn.pid)
 			if r == nil {
