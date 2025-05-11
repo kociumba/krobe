@@ -1,0 +1,47 @@
+name: Build and Test
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [
+            windows-latest, # only windows is supported for now
+            # ubuntu-latest,
+            # macos-latest
+          ]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: laytan/setup-odin@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: build
+        run: |
+          task build
+
+      - name: test # run tests only after building since we need the c/c++ libs to link with
+        run: |
+          odin test . -all-packages
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.os }}
+          path: |
+            ./bin/*
+          if-no-files-found: error
