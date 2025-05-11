@@ -24,6 +24,12 @@ $Components = @(
         OutputFile = "bin\tcp_wrapper.obj"
     },
     @{
+        Name = "udp_wrapper"
+        Type = "c"
+        SourceFile = "c\udp_wrapper.c"
+        OutputFile = "bin\udp_wrapper.obj"
+    },
+    @{
         Name = "proc_handlers"
         Type = "cpp"
         SourceFile = "cpp\proc_handlers.cpp"

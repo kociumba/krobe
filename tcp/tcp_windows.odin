@@ -179,22 +179,23 @@ get_win32_error_message :: proc(errorCode: win.DWORD) -> string {
 	return strings.trim_space(message_utf8)
 }
 
+// gets a window title from a HWND handle
 get_window_title :: proc(handle: win.HWND) -> Maybe(string) {
 	lpBuffer := make([]u16, 1024)
-    defer delete(lpBuffer)
+	defer delete(lpBuffer)
 	len := win.GetWindowTextW(handle, slice.as_ptr(lpBuffer), 1024)
 	if len == 0 {
-        log.debug("could not get window title")
+		log.debug("could not get window title")
 		return nil
 	}
 
 	title_utf8, err := win.utf16_to_utf8(lpBuffer)
-    if err != nil {
-        log.error(err)
-        return nil
-    }
+	if err != nil {
+		log.error(err)
+		return nil
+	}
 
-    return strings.trim_space(title_utf8)
+	return strings.trim_space(title_utf8)
 }
 
 @(deprecated = "currently unused")
