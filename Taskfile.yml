@@ -13,38 +13,38 @@ tasks:
     internal: true
     cmds:
       - pwsh -NoProfile -Command "mkdir bin -Force | Out-Null"
-  
+
   build:
     generates:
       - bin/krobe{{exeExt}}
     sources:
-      - c/tcp_wrapper.c
-      - cpp/proc_handlers.cpp
+      - /**/*.c
+      - /**/*.cpp
       - /**/*.odin
       - krobe.rc
     deps:
       - build:libs
     cmds:
       - odin build . -out:bin/krobe{{exeExt}} -o:speed -resource:krobe.rc
-  
+
   run:
     cmds:
       - task: build:libs
       - odin run . -resource:krobe.rc
       - task: del:temp:{{OS}}
-  
+
   del:temp:windows:
     silent: true
     internal: true
     cmds:
       - pwsh -NoProfile -Command "del krobe{{exeExt}}"
-  
+
   build:libs:
     generates:
       - bin/krobe.lib
     sources:
-      - c/tcp_wrapper.c
-      - cpp/proc_handlers.cpp
+      - /**/*.c
+      - /**/*.cpp
     silent: true
     cmds:
       - task: pre:build
