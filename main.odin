@@ -132,11 +132,11 @@ main :: proc() {
 	defer free_all(context.allocator)
 
 	l := log.create_console_logger(log.Level.Info)
-	context.logger = l
 	// disable logging when json output is enabled for an uninterrupted json stream
-	if !has_flag("-json") {
-		context.logger = log.create_console_logger(log.Level.Fatal)
+	if has_flag("-json") {
+		l = log.create_console_logger(log.Level.Fatal)
 	}
+	context.logger = l
 
 	use_udp := has_flag("-udp")
 	connections := get_connections(use_udp)
