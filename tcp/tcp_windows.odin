@@ -33,13 +33,15 @@ TCP_STATE_LAST_ACK :: 10
 TCP_STATE_TIME_WAIT :: 11
 TCP_STATE_DELETE_TCB :: 12
 
-foreign import "system:iphlpapi.dll"
-foreign import "system:ws2_32.dll"
+foreign import "system:iphlpapi.lib"
+foreign import "system:ws2_32.lib"
+foreign import "system:user32.lib"
 foreign import lib "../bin/krobe.lib"
 foreign lib {
 	get_tcp_connections :: proc() -> ^TcpConnections ---
 	free_tcp_connections :: proc(connections: ^TcpConnections) ---
 	print_tcp_connections :: proc(connections: ^TcpConnections) ---
+    get_hwnd :: proc(process_id: win.DWORD) -> win.HWND ---
 }
 foreign import kernel32 "system:kernel32.lib"
 foreign kernel32 {
