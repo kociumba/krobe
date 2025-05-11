@@ -1,19 +1,39 @@
 # krobe
 
-krobe is an app that aims to make collectiong data about open and active local connections easy.
+krobe is an app that aims to make collecting data about open and active local connections easy.
 
-Right now krobe supports tcp ipv4 connections only (it's the most commonly used type for local data exchange connections)
+Right now krobe supports TCP IPv4 connections only (it's the most commonly used type for local data exchange)
 
-This data can also be exported to json for easy use in other applications, and for processing with tools `jq`
+This data can also be exported to JSON for easy use in other applications, and for processing with tools `jq`
 
-No builds ar ecurrently provided since krobe is in early developement,
+No builds are currently provided since krobe is in early developement,
 to build krobe yoursefl, you need the following prerequisites on your system:
 
-- vs build tools installed
-- odin (version: dev-2025-04 and up)
-- taskfile
-- powershell (version 5.1 and up)
+- Visual Studio Build Tools
+- Odin (dev-2025-04 or later)
+- Taskfile
+- PowerShell (5.1 or higher)
 
-To run the build itself navigate to the repo root directory and run `task build`, if you meet all the prerequisited this will build all the components of krobe and produce a `krobe.exe` in the `/bin` directory
+To build the project, navigate to the repository root and run:
 
-Other platforms aside from windows are not supported yet, but there are plans to work towards corssplatform support
+```shell
+task build
+```
+
+Alternatively if you want to avoid using Taskfile, you will have to in order execute:
+
+```shell
+mkdir bin
+```
+
+```pwsh
+pwsh -NoProfile -ExecutionPolicy Bypass -File "./win_vs_build.ps1" -Target all -WorkingDir "[repo root directory]"
+```
+
+```pwsh
+odin build . -out:bin/krobe.exe -o:speed -resource:krobe.rc
+```
+
+If all prerequisites are met, this will compile Krobe and output `krobe.exe` in the `bin/` directory.
+
+Other platforms aside from windows are not supported yet, but there are plans to work towards corss-platform support
