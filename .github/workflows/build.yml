@@ -31,13 +31,13 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: ilammy/msvc-dev-cmd@v1
 
-      - name: test # kind of redundant since we don't have many actual tests yet
-        run: |
-          odin test . -all-packages
-
       - name: build
         run: |
           task build
+
+      - name: test # run tests only after building since we need the c/c++ libs to link with
+        run: |
+          odin test . -all-packages
 
       - name: upload artifact
         uses: actions/upload-artifact@v4
