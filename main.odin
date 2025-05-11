@@ -4,6 +4,7 @@ import "core:c"
 import "core:fmt"
 import "core:log"
 import "core:os"
+import "core:path/filepath"
 import "core:slice"
 import "core:testing"
 import "tcp"
@@ -44,6 +45,14 @@ main_test :: proc(t: ^testing.T) {
 	tcp.free_tcp_connections(connections)
 }
 
+// basic flag detection, should ideally use the core:flags package but this will do for now
+has_flag :: proc(flag: string) -> bool {
+    if slice.contains(os.args, flag) {
+        return true
+    }
+    return false
+}
+
 main :: proc() {
 	defer free_all(context.allocator)
 
@@ -60,13 +69,22 @@ main :: proc() {
 	conn_slice := slice.from_ptr(connections.connections, int(connections.count))
 
 	for conn in conn_slice {
-		if conn.pid == 4 {continue} // system process, skip it for now even tho many sevices run under it
+		if conn.pid == 4 {continue} 	// system process, skip it for now even tho many sevices run under it
 		if conn.state == tcp.TCP_STATE_LISTEN || conn.state == tcp.TCP_STATE_ESTAB {
 			r := tcp.get_proc_info(conn.pid)
+            if r != nil && !has_flag("-full") {
+                r = filepath.base(r.?)
+            }
 			if r == nil {
 				continue
 			}
-			fmt.printf("port: %#v, pid: %#v (handle: %#v), path: %#v\n", conn.local_port, conn.pid, tcp.get_hwnd(conn.pid), r)
+			fmt.printf(
+				"port: %#v, pid: %#v (handle: %#v), path: %#v\n",
+				conn.local_port,
+				conn.pid,
+				tcp.get_hwnd(conn.pid),
+				r,
+			)
 		}
 	}
 }

@@ -174,9 +174,10 @@ get_win32_error_message :: proc(errorCode: win.DWORD) -> string {
 
 	win.LocalFree(cast(win.HANDLE)lpBuffer)
 
-	return strings.trim_space(message_utf8)
+    return strings.trim_space(message_utf8)
 }
 
+@(deprecated = "currently unused")
 get_parent_pid :: proc(pid: win.DWORD) -> Maybe(win.DWORD) {
 	h_snapshot := win.CreateToolhelp32Snapshot(win.TH32CS_SNAPPROCESS, 0)
 	if h_snapshot == win.INVALID_HANDLE_VALUE {
@@ -205,6 +206,7 @@ get_parent_pid :: proc(pid: win.DWORD) -> Maybe(win.DWORD) {
 	return nil
 }
 
+@(deprecated = "currently unused")
 get_child_pids :: proc(pid: win.DWORD) -> [dynamic]win.DWORD {
 	children := [dynamic]win.DWORD{}
 
