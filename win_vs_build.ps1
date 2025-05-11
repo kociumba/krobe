@@ -16,6 +16,21 @@ param(
     [switch]$Force
 )
 
+$Components = @(
+    @{
+        Name = "tcp_wrapper"
+        Type = "c"
+        SourceFile = "c\tcp_wrapper.c" 
+        OutputFile = "bin\tcp_wrapper.obj"
+    },
+    @{
+        Name = "proc_handlers"
+        Type = "cpp"
+        SourceFile = "cpp\proc_handlers.cpp"
+        OutputFile = "bin\proc_handlers.obj"
+    }
+)
+
 function Initialize-VSDevEnv {
     [CmdletBinding()]
     param(
@@ -67,7 +82,7 @@ function Initialize-VSDevEnv {
         Write-Verbose "Initializing developer environment using: . `"$devShellScript`" -Arch $DevShellArch"
         . $devShellScript @devShellParams -ErrorAction Stop 1>$null 6>$null # Dot-source to apply to current scope
         
-        Write-Host "Visual Studio Developer environment for '$DevShellArch' initialized successfully." -ForegroundColor Green
+        Write-Host "Visual Studio Developer environment for '$DevShellArch' created successfully." -ForegroundColor Green
         return $true
 
     } catch {
@@ -76,62 +91,71 @@ function Initialize-VSDevEnv {
     }
 }
 
-function Build-ComponentC {
+function Build-Component {
+    [CmdletBinding()]
     param(
-        [string]$WorkingDir
+        [Parameter(Mandatory=$true)]
+        [string]$WorkingDir,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$SourceFile,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$OutputFile,
+        
+        [Parameter(Mandatory=$false)]
+        [string]$ComponentType = "Component"
     )
     
-    $command = "cl /nologo /c /EHsc /O2 /DWIN32 /D_WINDOWS /D_WINSOCK_DEPRECATED_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS `"$WorkingDir\c\tcp_wrapper.c`" /Fo:`"$WorkingDir\bin\tcp_wrapper.obj`""
+    $compilerFlags = @(
+        "/nologo", "/c", "/EHsc", "/O2",
+        "/DWIN32", "/D_WINDOWS",
+        "/D_WINSOCK_DEPRECATED_NO_WARNINGS",
+        "/D_CRT_SECURE_NO_WARNINGS"
+    )
     
-    # Write-Host "Building C component..." -ForegroundColor Cyan
+    $fullSourcePath = Join-Path $WorkingDir $SourceFile
+    $fullOutputPath = Join-Path $WorkingDir $OutputFile
+    
+    $command = "cl $($compilerFlags -join ' ') `"$fullSourcePath`" /Fo:`"$fullOutputPath`""
+    
+    Write-Verbose "Building $ComponentType from $SourceFile"
     Write-Verbose "Executing: $command"
     
     try {
         Invoke-Expression $command
         if ($LASTEXITCODE -ne 0) {
-            throw "C compilation failed with exit code $LASTEXITCODE"
+            throw "$ComponentType compilation failed with exit code $LASTEXITCODE"
         }
-        Write-Verbose "C component built successfully." # -ForegroundColor Green
+        Write-Verbose "$ComponentType built successfully."
         return $true
     }
     catch {
-        Write-Error "Failed to build C component: $($_.Exception.Message)"
-        return $false
-    }
-}
-
-function Build-ComponentCpp {
-    param(
-        [string]$WorkingDir
-    )
-    
-    $command = "cl /nologo /c /EHsc /O2 /DWIN32 /D_WINDOWS /D_WINSOCK_DEPRECATED_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS `"$WorkingDir\cpp\proc_handlers.cpp`" /Fo:`"$WorkingDir\bin\proc_handlers.obj`""
-    
-    # Write-Host "Building C++ component..." -ForegroundColor Cyan
-    Write-Verbose "Executing: $command"
-    
-    try {
-        Invoke-Expression $command
-        if ($LASTEXITCODE -ne 0) {
-            throw "C++ compilation failed with exit code $LASTEXITCODE"
-        }
-        Write-Verbose "C++ component built successfully." # -ForegroundColor Green
-        return $true
-    }
-    catch {
-        Write-Error "Failed to build C++ component: $($_.Exception.Message)"
+        Write-Error "Failed to build ${ComponentType}: $($_.Exception.Message)"
         return $false
     }
 }
 
 function Create-Library {
+    [CmdletBinding()]
     param(
-        [string]$WorkingDir
+        [Parameter(Mandatory=$true)]
+        [string]$WorkingDir,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$OutputFile,
+        
+        [Parameter(Mandatory=$true)]
+        [string[]]$ObjectFiles
     )
     
-    $command = "lib /nologo /OUT:`"$WorkingDir\bin\krobe.lib`" `"$WorkingDir\bin\tcp_wrapper.obj`" `"$WorkingDir\bin\proc_handlers.obj`""
+    $fullOutputPath = Join-Path $WorkingDir $OutputFile
+    $objectFilePaths = $ObjectFiles | ForEach-Object { Join-Path $WorkingDir $_ }
+    $objectFileArgs = $objectFilePaths | ForEach-Object { "`"$_`"" }
     
-    # Write-Host "Creating library..." -ForegroundColor Cyan
+    $command = "lib /nologo /OUT:`"$fullOutputPath`" $($objectFileArgs -join ' ')"
+    
+    Write-Verbose "Creating library: $OutputFile"
     Write-Verbose "Executing: $command"
     
     try {
@@ -139,7 +163,7 @@ function Create-Library {
         if ($LASTEXITCODE -ne 0) {
             throw "Library creation failed with exit code $LASTEXITCODE"
         }
-        Write-Verbose "Library created successfully." # -ForegroundColor Green
+        Write-Verbose "Library created successfully: $OutputFile"
         return $true
     }
     catch {
@@ -151,9 +175,10 @@ function Create-Library {
 # Main execution flow
 try {
     # Ensure bin directory exists
-    if (-not (Test-Path "$WorkingDir\bin")) {
-        New-Item -Path "$WorkingDir\bin" -ItemType Directory -Force | Out-Null
-        Write-Verbose "Created bin directory at $WorkingDir\bin"
+    $binDir = Join-Path $WorkingDir "bin"
+    if (-not (Test-Path $binDir)) {
+        New-Item -Path $binDir -ItemType Directory -Force | Out-Null
+        Write-Verbose "Created bin directory at $binDir"
     }
     
     # Initialize VS environment
@@ -164,21 +189,64 @@ try {
     
     # Build components based on target
     $success = $true
+    $builtObjects = @()
     
     switch ($Target) {
         'all' {
-            $success = $success -and (Build-ComponentC -WorkingDir $WorkingDir)
-            $success = $success -and (Build-ComponentCpp -WorkingDir $WorkingDir)
-            $success = $success -and (Create-Library -WorkingDir $WorkingDir)
+            # Build all components
+            foreach ($component in $Components) {
+                $componentSuccess = Build-Component `
+                    -WorkingDir $WorkingDir `
+                    -SourceFile $component.SourceFile `
+                    -OutputFile $component.OutputFile `
+                    -ComponentType "$($component.Type) component: $($component.Name)"
+                
+                if ($componentSuccess) {
+                    $builtObjects += $component.OutputFile
+                }
+                
+                $success = $success -and $componentSuccess
+            }
+            
+            # Create library with all built objects
+            if ($success -and $builtObjects.Count -gt 0) {
+                $success = $success -and (Create-Library `
+                    -WorkingDir $WorkingDir `
+                    -OutputFile "bin\krobe.lib" `
+                    -ObjectFiles $builtObjects)
+            }
         }
         'c' {
-            $success = $success -and (Build-ComponentC -WorkingDir $WorkingDir)
+            # Build only C components
+            foreach ($component in $Components | Where-Object { $_.Type -eq "c" }) {
+                $componentSuccess = Build-Component `
+                    -WorkingDir $WorkingDir `
+                    -SourceFile $component.SourceFile `
+                    -OutputFile $component.OutputFile `
+                    -ComponentType "C component: $($component.Name)"
+                
+                $success = $success -and $componentSuccess
+            }
         }
         'cpp' {
-            $success = $success -and (Build-ComponentCpp -WorkingDir $WorkingDir)
+            # Build only C++ components
+            foreach ($component in $Components | Where-Object { $_.Type -eq "cpp" }) {
+                $componentSuccess = Build-Component `
+                    -WorkingDir $WorkingDir `
+                    -SourceFile $component.SourceFile `
+                    -OutputFile $component.OutputFile `
+                    -ComponentType "C++ component: $($component.Name)"
+                
+                $success = $success -and $componentSuccess
+            }
         }
         'lib' {
-            $success = $success -and (Create-Library -WorkingDir $WorkingDir)
+            # Create library with all component object files (assuming they're already built)
+            $objectFiles = $Components | ForEach-Object { $_.OutputFile }
+            $success = $success -and (Create-Library `
+                -WorkingDir $WorkingDir `
+                -OutputFile "bin\krobe.lib" `
+                -ObjectFiles $objectFiles)
         }
     }
     
@@ -186,7 +254,7 @@ try {
         throw "One or more build steps failed."
     }
     
-    # Write-Host "All requested components built successfully." -ForegroundColor Green
+    Write-Host "Native build successfull." -ForegroundColor Green
     exit 0
 }
 catch {
