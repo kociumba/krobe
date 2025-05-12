@@ -89,6 +89,24 @@ Options :: struct {
 
 opts: Options
 
+validate_watch_duration :: proc(
+	model: rawptr,
+	name: string,
+	value: any,
+	args_tag: string,
+) -> (error: string) {
+    defer free_all(context.allocator)
+
+    if name == "watch" {
+        v := value.(string)
+        if utils.string_to_duration(v) == nil {
+            error = fmt.aprintf("incorrect duration string for -watch got: %s, valid example: 20s, 5m", v)
+        }
+    }
+
+    return
+}
+
 @(test)
 main_test :: proc(t: ^testing.T) {
 	defer free_all(context.allocator)
@@ -137,6 +155,7 @@ main :: proc() {
 	defer free_all(context.allocator)
 
 	style: flags.Parsing_Style = .Odin
+    flags.register_flag_checker(validate_watch_duration)
 	flags.parse_or_exit(&opts, os.args, style)
 
 	l := log.create_console_logger(log.Level.Info)

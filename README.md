@@ -1,13 +1,13 @@
 # krobe
 
-krobe is an app that aims to make collecting data about open and active local connections easy.
+krobe is a cli app that aims to make collecting data about open and active local connections easy. 
 
-Right now krobe supports TCP IPv4 connections only (it's the most commonly used type for local data exchange)
+It is a small, native executable that works on Windows without any dependencies, using raw win32 and odin standard library.
+As a result, the executable size is kept tiny, around ~650kb on windows.
 
-This data can also be exported to JSON for easy use in other applications, and for processing with tools `jq`
+Right now, krobe supports TCP/UDP IPv4 connections only (it's the most commonly used type for local data exchange)
 
-No builds are currently provided since krobe is in early developement,
-to build krobe yoursefl, you need the following prerequisites on your system:
+To build krobe yoursefl, you need the following prerequisites on your system:
 
 - Visual Studio Build Tools
 - Odin (dev-2025-04 or later)
@@ -20,20 +20,18 @@ To build the project, navigate to the repository root and run:
 task build
 ```
 
-Alternatively if you want to avoid using Taskfile, you will have to in order execute:
-
-```shell
-mkdir bin
-```
-
-```pwsh
-pwsh -NoProfile -ExecutionPolicy Bypass -File "./win_vs_build.ps1" -Target all -WorkingDir "[repo root directory]"
-```
-
-```pwsh
-odin build . -out:bin/krobe.exe -o:speed -resource:krobe.rc
-```
-
 If all prerequisites are met, this will compile Krobe and output `krobe.exe` in the `bin/` directory.
 
-Other platforms aside from windows are not supported yet, but there are plans to work towards corss-platform support
+Other platforms aside from windows are not supported yet, but there are plans to work towards cross-platform support
+
+## Features
+
+By default, krobe prints all the connections and data it finds about them to the terminal, alongside some errors that are bound to happen every time you run krobe. These are most likely `Access is denied.` errors on windows. To minimise how many of these happen, you can run krobe as admin, which will allow it to query information with higher privelages.
+
+You can modify the behaviour of krobe with flags:
+- `-udp` - gets info about udp connections instead of the default tcp
+- `-json` - prints the data as json, and disables any logging outside of the json output, this is meant to allow krobe to work with tools like `jq`
+- `-full` - prints the full absolute paths instead of only the executable names
+- `-watch:<string>` - allows you to provide a duration string like 20s, 5m, 100ms; krobe will then run on a timer of that duration and print new data every time
+
+You can also get info on these flags using `-h` or `-help`, which prints a help card with this info
