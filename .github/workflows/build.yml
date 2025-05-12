@@ -37,7 +37,7 @@ jobs:
 
       - name: debug task
         timeout-minutes: 5
-        if: startsWith(matrix.os, 'windows')
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           which task
           task --version
