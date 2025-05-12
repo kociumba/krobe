@@ -2,9 +2,8 @@
 
 krobe is a cli app that aims to make collecting data about open and active local connections easy. 
 
-It is a small native executable,
-on windows works without any dependencies, using raw win32 and odin standard library.
-Due to this, the executable size is kept tiny, around ~650kb on windows.
+It is a small, native executable that works on Windows without any dependencies, using raw win32 and odin standard library.
+As a result, the executable size is kept tiny, around ~650kb on windows.
 
 Right now, krobe supports TCP/UDP IPv4 connections only (it's the most commonly used type for local data exchange)
 
