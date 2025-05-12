@@ -15,7 +15,7 @@ tasks:
       - pwsh -NoProfile -Command "mkdir bin -Force | Out-Null"
 
   pre:build:linux:
-    silent: true
+    silent: false
     internal: true
     cmds:
       - mkdir -p bin 
@@ -38,7 +38,7 @@ tasks:
       - odin build . -out:bin/krobe{{exeExt}} -o:speed -resource:assets/krobe.rc
 
   build:odin:linux:
-    silent: true
+    silent: false
     cmds:
       - odin build . -out:bin/krobe{{exeExt}} -o:speed
 
@@ -71,7 +71,7 @@ tasks:
     sources:
       - /**/*.c
       - /**/*.cpp
-    silent: true
+    silent: false
     cmds:
       - task: pre:build
-      - sh ./linux_gcc_build.sh
+      - ./linux_gcc_build.sh
