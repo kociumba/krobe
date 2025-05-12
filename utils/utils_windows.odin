@@ -26,7 +26,11 @@ ipv4_to_string :: proc(addr: win.DWORD) -> string {
 
 // placeholder string return, might return a struct or something else later
 get_proc_info :: proc(pid: win.DWORD) -> Maybe(string) {
-	h_process := win.OpenProcess(win.PROCESS_QUERY_INFORMATION, false, pid)
+	h_process := win.OpenProcess(
+		win.PROCESS_QUERY_INFORMATION | win.PROCESS_QUERY_LIMITED_INFORMATION,
+		false,
+		pid,
+	)
 	if h_process == nil {
 		if win.GetLastError() == win.ERROR_ACCESS_DENIED {
 			// children := get_child_pids(pid)
@@ -68,6 +72,7 @@ get_proc_info :: proc(pid: win.DWORD) -> Maybe(string) {
 	r, err := win.utf16_to_utf8(process_path[:buffer_size])
 	if err != nil {
 		log.error("could not convert to utf8")
+        return nil
 	}
 	return string(r)
 }
@@ -121,7 +126,7 @@ get_window_title :: proc(handle: win.HWND) -> Maybe(string) {
 		return nil
 	}
 
-	title_utf8, err := win.utf16_to_utf8(lpBuffer)
+	title_utf8, err := win.utf16_to_utf8(lpBuffer[:len])
 	if err != nil {
 		log.error(err)
 		return nil
@@ -189,4 +194,3 @@ get_child_pids :: proc(pid: win.DWORD) -> [dynamic]win.DWORD {
 
 	return children
 }
-
