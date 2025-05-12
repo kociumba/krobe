@@ -35,10 +35,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential
 
-      - name: build
-        timeout-minutes: 10
+      - name: debug task
+        timeout-minutes: 5
+        if: startsWith(matrix.os, 'windows')
         run: |
-          task build
+          which task
+          task --version
+          task --verbose build:libs:linux
+
+      - name: build
+        timeout-minutes: 5
+        run: |
+          task --taskfile Taskfile.yml build
 
       - name: test # run tests only after building since we need the c/c++ libs to link with
         run: |
