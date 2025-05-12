@@ -10,6 +10,7 @@ import "core:slice"
 import "core:testing"
 import "tcp"
 import "udp"
+import "utils"
 
 // Common interface for both TCP and UDP connection types
 Connection_Info :: struct {
@@ -158,7 +159,7 @@ main :: proc() {
 			(!use_udp && (conn.state == tcp.TCP_STATE_LISTEN || conn.state == tcp.TCP_STATE_ESTAB))
 
 		if should_include {
-			r := tcp.get_proc_info(conn.pid)
+			r := utils.get_proc_info(conn.pid)
 			if r == nil {
 				continue
 			}
@@ -171,7 +172,7 @@ main :: proc() {
 					json_out {
 						port = int(conn.local_port),
 						pid = int(conn.pid),
-						title = tcp.get_window_title(tcp.get_hwnd(conn.pid)),
+						title = utils.get_window_title(tcp.get_hwnd(conn.pid)),
 						path = r.?,
 					},
 				)
@@ -180,7 +181,7 @@ main :: proc() {
 					"port: %#v, pid: %#v (title: %#v), path: %#v\n",
 					conn.local_port,
 					conn.pid,
-					tcp.get_window_title(tcp.get_hwnd(conn.pid)).? or_else "[no window]",
+					utils.get_window_title(tcp.get_hwnd(conn.pid)).? or_else "[no window]",
 					r,
 				)
 			}
