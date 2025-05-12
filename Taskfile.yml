@@ -75,3 +75,7 @@ tasks:
     cmds:
       - task: pre:build
       - ./linux_gcc_build.sh
+
+  get:vars:
+    cmds:
+      - echo "OS={{OS}}, exeExt={{exeExt}}"

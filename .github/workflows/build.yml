@@ -41,7 +41,7 @@ jobs:
         run: |
           which task
           task --version
-          task --verbose build:libs:linux
+          task --verbose get:vars
 
       - name: build
         timeout-minutes: 5
