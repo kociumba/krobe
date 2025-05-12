@@ -2,13 +2,14 @@ package main
 
 import "core:c"
 import "core:encoding/json"
+import "core:flags"
 import "core:fmt"
 import "core:log"
 import "core:os"
 import "core:path/filepath"
 import "core:slice"
 import "core:testing"
-import "core:flags"
+import "core:time"
 import "tcp"
 import "udp"
 import "utils"
@@ -80,9 +81,10 @@ get_connections :: proc(use_udp: bool) -> (result: Connections) {
 
 // options paresed from cli args
 Options :: struct {
-    use_udp: bool `args:"name=udp" usage:"if true, searches udp connections instead of tcp"`,
-    use_full: bool `args:"name=full" usage:"if true, includes full absolute paths to found executables"`,
-    use_json: bool `args:"name=json" usage:"if true, outputs the data in a json format, for piping into other programs"`
+	use_udp:  bool `args:"name=udp" usage:"if true, searches udp connections instead of tcp"`,
+	use_full: bool `args:"name=full" usage:"if true, includes full absolute paths to found executables"`,
+	use_json: bool `args:"name=json" usage:"if true, outputs the data in a json format, for piping into other programs"`,
+	watch:    string `args:"name=watch" usage:"if set krobe will collect data on this set interval, the value is a string representing a duration, for example 20s"`,
 }
 
 opts: Options
@@ -134,8 +136,8 @@ json_out :: struct {
 main :: proc() {
 	defer free_all(context.allocator)
 
-    style: flags.Parsing_Style = .Odin
-    flags.parse_or_exit(&opts, os.args, style)
+	style: flags.Parsing_Style = .Odin
+	flags.parse_or_exit(&opts, os.args, style)
 
 	l := log.create_console_logger(log.Level.Info)
 	// disable logging when json output is enabled for an uninterrupted json stream
@@ -143,6 +145,14 @@ main :: proc() {
 		l = log.create_console_logger(log.Level.Fatal)
 	}
 	context.logger = l
+
+	if opts.watch != "" {
+		duration := utils.string_to_duration(opts.watch)
+		if duration == nil {
+			log.errorf("could not parse provided duration: %s", opts.watch)
+			os.exit(69)
+		}
+	}
 
 	connections := get_connections(opts.use_udp)
 
@@ -160,7 +170,8 @@ main :: proc() {
 
 		should_include :=
 			opts.use_udp ||
-			(!opts.use_udp && (conn.state == tcp.TCP_STATE_LISTEN || conn.state == tcp.TCP_STATE_ESTAB))
+			(!opts.use_udp &&
+					(conn.state == tcp.TCP_STATE_LISTEN || conn.state == tcp.TCP_STATE_ESTAB))
 
 		if should_include {
 			r := utils.get_proc_info(conn.pid)

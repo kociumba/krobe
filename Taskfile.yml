@@ -25,7 +25,7 @@ tasks:
     deps:
       - build:libs
     cmds:
-      - odin build . -out:bin/krobe{{exeExt}} -o:speed -resource:krobe.rc
+      - odin build . -out:bin/krobe{{exeExt}} -o:speed -resource:assets/krobe.rc
 
   run:
     cmds:
