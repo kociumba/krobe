@@ -2,6 +2,7 @@ package utils
 
 import "core:strconv"
 import "core:strings"
+import "core:testing"
 import "core:time"
 
 string_to_duration :: proc(input: string) -> Maybe(time.Duration) {
@@ -42,4 +43,14 @@ string_to_duration :: proc(input: string) -> Maybe(time.Duration) {
 	}
 
 	return duration
+}
+
+@test
+string_to_duration_test :: proc(t: ^testing.T) {
+	testing.expect(t, string_to_duration("10ms") == time.Millisecond * 10)
+	testing.expect(t, string_to_duration("20s") == time.Second * 20)
+	testing.expect(t, string_to_duration("40m") == time.Minute * 40)
+	testing.expect(t, string_to_duration("2h") == time.Hour * 2)
+
+    testing.expect(t, string_to_duration("slcancla") == nil)
 }
