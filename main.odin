@@ -8,6 +8,7 @@ import "core:os"
 import "core:path/filepath"
 import "core:slice"
 import "core:testing"
+import "core:flags"
 import "tcp"
 import "udp"
 
@@ -76,6 +77,15 @@ get_connections :: proc(use_udp: bool) -> (result: Connections) {
 	return result
 }
 
+// options paresed from cli args
+Options :: struct {
+    use_udp: bool `args:"name=udp" usage:"if true, searches udp connections instead of tcp"`,
+    use_full: bool `args:"name=full" usage:"if true, includes full absolute paths to found executables"`,
+    use_json: bool `args:"name=json" usage:"if true, outputs the data in a json format, for piping into other programs"`
+}
+
+opts: Options
+
 @(test)
 main_test :: proc(t: ^testing.T) {
 	defer free_all(context.allocator)
@@ -112,14 +122,6 @@ main_test :: proc(t: ^testing.T) {
 	tcp.free_tcp_connections(connections)
 }
 
-// basic flag detection, should ideally use the core:flags package but this will do for now
-has_flag :: proc(flag: string) -> bool {
-	if slice.contains(os.args, flag) {
-		return true
-	}
-	return false
-}
-
 // the struct outputed in an array when -json is set
 json_out :: struct {
 	port:  int,
@@ -131,18 +133,20 @@ json_out :: struct {
 main :: proc() {
 	defer free_all(context.allocator)
 
+    style: flags.Parsing_Style = .Odin
+    flags.parse_or_exit(&opts, os.args, style)
+
 	l := log.create_console_logger(log.Level.Info)
 	// disable logging when json output is enabled for an uninterrupted json stream
-	if has_flag("-json") {
+	if opts.use_json {
 		l = log.create_console_logger(log.Level.Fatal)
 	}
 	context.logger = l
 
-	use_udp := has_flag("-udp")
-	connections := get_connections(use_udp)
+	connections := get_connections(opts.use_udp)
 
 	if len(connections.connections) == 0 {
-		protocol := use_udp ? "UDP" : "TCP"
+		protocol := opts.use_udp ? "UDP" : "TCP"
 		log.errorf("Failed to get %s connections!", protocol)
 		os.exit(69)
 	}
@@ -154,18 +158,18 @@ main :: proc() {
 		if conn.pid == 4 {continue} 	// system process, skip it for now even tho many sevices run under it
 
 		should_include :=
-			use_udp ||
-			(!use_udp && (conn.state == tcp.TCP_STATE_LISTEN || conn.state == tcp.TCP_STATE_ESTAB))
+			opts.use_udp ||
+			(!opts.use_udp && (conn.state == tcp.TCP_STATE_LISTEN || conn.state == tcp.TCP_STATE_ESTAB))
 
 		if should_include {
 			r := tcp.get_proc_info(conn.pid)
 			if r == nil {
 				continue
 			}
-			if !has_flag("-full") {
+			if !opts.use_full {
 				r = filepath.base(r.?)
 			}
-			if has_flag("-json") {
+			if opts.use_json {
 				append(
 					&json_struct,
 					json_out {
@@ -187,7 +191,7 @@ main :: proc() {
 		}
 	}
 
-	if has_flag("-json") {
+	if opts.use_json {
 		data, err := json.marshal(json_struct, {pretty = true})
 		defer delete(data)
 		if err != nil {
