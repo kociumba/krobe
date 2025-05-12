@@ -20,19 +20,19 @@ $Components = @(
     @{
         Name = "tcp_wrapper"
         Type = "c"
-        SourceFile = "c\tcp_wrapper.c" 
+        SourceFile = "c\tcp_wrapper_windows.c" 
         OutputFile = "bin\tcp_wrapper.obj"
     },
     @{
         Name = "udp_wrapper"
         Type = "c"
-        SourceFile = "c\udp_wrapper.c"
+        SourceFile = "c\udp_wrapper_windows.c"
         OutputFile = "bin\udp_wrapper.obj"
     },
     @{
         Name = "proc_handlers"
         Type = "cpp"
-        SourceFile = "cpp\proc_handlers.cpp"
+        SourceFile = "cpp\proc_handlers_windows.cpp"
         OutputFile = "bin\proc_handlers.obj"
     }
 )
