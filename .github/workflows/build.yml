@@ -12,8 +12,8 @@ jobs:
     strategy:
       matrix:
         os: [
-            windows-latest, # only windows is supported for now
-            # ubuntu-latest,
+            windows-latest,
+            ubuntu-latest,
             # macos-latest
           ]
 
@@ -29,6 +29,11 @@ jobs:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: ilammy/msvc-dev-cmd@v1
+        if: startsWith(matrix.os, 'windows')
+      - if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
 
       - name: build
         run: |

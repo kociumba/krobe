@@ -78,9 +78,7 @@ int find_pid_of_inode(unsigned int inode) {
     // Iterate through all processes
     if ((dir = opendir("/proc")) != NULL) {
         while ((entry = readdir(dir)) != NULL) {
-            // Check if the directory name is a number (PID)
             if (isdigit(entry->d_name[0])) {
-                // Check in /proc/[pid]/fd/ directory
                 snprintf(path, sizeof(path), "/proc/%s/fd", entry->d_name);
                 DIR *fd_dir;
                 struct dirent *fd_entry;
@@ -94,7 +92,6 @@ int find_pid_of_inode(unsigned int inode) {
                         if (len != -1) {
                             link[len] = '\0';
                             
-                            // Check if this is a socket with our inode
                             unsigned int fd_inode;
                             if (sscanf(link, "socket:[%u]", &fd_inode) == 1) {
                                 if (fd_inode == inode) {
@@ -120,7 +117,7 @@ int find_pid_of_inode(unsigned int inode) {
 TcpConnections* get_tcp_connections() {
     FILE *fp;
     char line[512];
-    uint32_t count = 0;
+    uint32_t result_count = 0;
     TcpConnections* result = (TcpConnections*)malloc(sizeof(TcpConnections));
     
     if (!result) return NULL;
@@ -128,7 +125,6 @@ TcpConnections* get_tcp_connections() {
     result->count = 0;
     result->connections = NULL;
     
-    // First, count the number of connections (skip header line)
     if ((fp = fopen("/proc/net/tcp", "r")) == NULL) {
         free(result);
         return NULL;
@@ -137,25 +133,25 @@ TcpConnections* get_tcp_connections() {
     // Skip header line
     fgets(line, sizeof(line), fp);
     
+    // First pass: count lines
     while (fgets(line, sizeof(line), fp) != NULL) {
-        count++;
+        result_count++;
     }
     
     // Allocate memory for connections
-    result->connections = (TcpConnectionInfo*)malloc(count * sizeof(TcpConnectionInfo));
+    result->connections = (TcpConnectionInfo*)malloc(result_count * sizeof(TcpConnectionInfo));
     if (!result->connections) {
         fclose(fp);
         free(result);
         return NULL;
     }
     
-    // Reset file pointer and skip header again
+    // Second pass: parse lines
     rewind(fp);
     fgets(line, sizeof(line), fp);
     
-    // Parse each line
-    count = 0;
-    while (fgets(line, sizeof(line), fp) != NULL && count < count) {
+    uint32_t idx = 0;
+    while (fgets(line, sizeof(line), fp) != NULL && idx < result_count) {
         unsigned int local_addr, local_port;
         unsigned int remote_addr, remote_port;
         unsigned int state, inode;
@@ -165,30 +161,25 @@ TcpConnections* get_tcp_connections() {
                &remote_addr, &remote_port,
                &state, &inode);
         
-        // Fill in the connection information
-        result->connections[count].state = state + 1; // +1 to match Windows values
-        result->connections[count].local_addr = ntohl(local_addr);
-        result->connections[count].local_port = local_port;
-        result->connections[count].remote_addr = ntohl(remote_addr);
-        result->connections[count].remote_port = remote_port;
+        result->connections[idx].state = state + 1; // +1 to match Windows values
+        result->connections[idx].local_addr = ntohl(local_addr);
+        result->connections[idx].local_port = local_port;
+        result->connections[idx].remote_addr = ntohl(remote_addr);
+        result->connections[idx].remote_port = remote_port;
+        result->connections[idx].pid = find_pid_of_inode(inode);
         
-        // Find PID of the process owning this socket
-        result->connections[count].pid = find_pid_of_inode(inode);
-        
-        count++;
+        idx++;
     }
     
     fclose(fp);
-    result->count = count;
+    result->count = idx;
     return result;
 }
 
 // Function to free TCP connections
 void free_tcp_connections(TcpConnections* connections) {
     if (connections) {
-        if (connections->connections) {
-            free(connections->connections);
-        }
+        free(connections->connections);
         free(connections);
     }
 }
@@ -197,7 +188,7 @@ void free_tcp_connections(TcpConnections* connections) {
 UdpEndpoints* get_udp_endpoints() {
     FILE *fp;
     char line[512];
-    uint32_t count = 0;
+    uint32_t result_count = 0;
     UdpEndpoints* result = (UdpEndpoints*)malloc(sizeof(UdpEndpoints));
     
     if (!result) return NULL;
@@ -205,7 +196,6 @@ UdpEndpoints* get_udp_endpoints() {
     result->count = 0;
     result->endpoints = NULL;
     
-    // First, count the number of endpoints (skip header line)
     if ((fp = fopen("/proc/net/udp", "r")) == NULL) {
         free(result);
         return NULL;
@@ -214,25 +204,25 @@ UdpEndpoints* get_udp_endpoints() {
     // Skip header line
     fgets(line, sizeof(line), fp);
     
+    // First pass: count lines
     while (fgets(line, sizeof(line), fp) != NULL) {
-        count++;
+        result_count++;
     }
     
     // Allocate memory for endpoints
-    result->endpoints = (UdpEndpointInfo*)malloc(count * sizeof(UdpEndpointInfo));
+    result->endpoints = (UdpEndpointInfo*)malloc(result_count * sizeof(UdpEndpointInfo));
     if (!result->endpoints) {
         fclose(fp);
         free(result);
         return NULL;
     }
     
-    // Reset file pointer and skip header again
+    // Second pass: parse lines
     rewind(fp);
     fgets(line, sizeof(line), fp);
     
-    // Parse each line
-    count = 0;
-    while (fgets(line, sizeof(line), fp) != NULL && count < count) {
+    uint32_t idx = 0;
+    while (fgets(line, sizeof(line), fp) != NULL && idx < result_count) {
         unsigned int local_addr, local_port;
         unsigned int remote_addr, remote_port;
         unsigned int inode;
@@ -242,29 +232,24 @@ UdpEndpoints* get_udp_endpoints() {
                &remote_addr, &remote_port,
                &inode);
         
-        // Fill in the endpoint information
-        result->endpoints[count].local_addr = ntohl(local_addr);
-        result->endpoints[count].local_port = local_port;
-        result->endpoints[count].remote_addr = ntohl(remote_addr);
-        result->endpoints[count].remote_port = remote_port;
+        result->endpoints[idx].local_addr = ntohl(local_addr);
+        result->endpoints[idx].local_port = local_port;
+        result->endpoints[idx].remote_addr = ntohl(remote_addr);
+        result->endpoints[idx].remote_port = remote_port;
+        result->endpoints[idx].pid = find_pid_of_inode(inode);
         
-        // Find PID of the process owning this socket
-        result->endpoints[count].pid = find_pid_of_inode(inode);
-        
-        count++;
+        idx++;
     }
     
     fclose(fp);
-    result->count = count;
+    result->count = idx;
     return result;
 }
 
 // Function to free UDP endpoints
 void free_udp_endpoints(UdpEndpoints* endpoints) {
     if (endpoints) {
-        if (endpoints->endpoints) {
-            free(endpoints->endpoints);
-        }
+        free(endpoints->endpoints);
         free(endpoints);
     }
 }
@@ -301,7 +286,6 @@ void print_tcp_connections(TcpConnections* connections) {
         struct in_addr local_addr, remote_addr;
         char local_ip[INET_ADDRSTRLEN], remote_ip[INET_ADDRSTRLEN];
         
-        // Convert addresses to readable format
         local_addr.s_addr = htonl(connections->connections[i].local_addr);
         remote_addr.s_addr = htonl(connections->connections[i].remote_addr);
         
@@ -329,7 +313,6 @@ void print_udp_endpoints(UdpEndpoints* endpoints) {
         struct in_addr local_addr;
         char local_ip[INET_ADDRSTRLEN];
         
-        // Convert addresses to readable format
         local_addr.s_addr = htonl(endpoints->endpoints[i].local_addr);
         inet_ntop(AF_INET, &local_addr, local_ip, sizeof(local_ip));
         
@@ -340,21 +323,16 @@ void print_udp_endpoints(UdpEndpoints* endpoints) {
     }
 }
 
-// Simple test function
 #ifdef TEST_CODE
 int main() {
-    // Get and print TCP connections
     TcpConnections* tcp_connections = get_tcp_connections();
     print_tcp_connections(tcp_connections);
     free_tcp_connections(tcp_connections);
     
     printf("\n");
-    
-    // Get and print UDP endpoints
     UdpEndpoints* udp_endpoints = get_udp_endpoints();
     print_udp_endpoints(udp_endpoints);
     free_udp_endpoints(udp_endpoints);
-    
     return 0;
 }
 #endif

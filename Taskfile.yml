@@ -32,7 +32,7 @@ tasks:
       - task: build:libs:{{OS}}
       - task: build:odin:{{OS}}
 
-  build:odin:window:
+  build:odin:windows:
     silent: true
     cmds:
       - odin build . -out:bin/krobe{{exeExt}} -o:speed -resource:assets/krobe.rc
@@ -44,7 +44,7 @@ tasks:
 
   run:
     cmds:
-      - task: build:libs
+      - task: build:libs:{{OS}}
       - odin run . -resource:assets/krobe.rc
       - task: del:temp:{{OS}}
 
