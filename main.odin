@@ -146,14 +146,29 @@ main :: proc() {
 	}
 	context.logger = l
 
+	duration: time.Duration
 	if opts.watch != "" {
-		duration := utils.string_to_duration(opts.watch)
-		if duration == nil {
+		duration = utils.string_to_duration(opts.watch).? or_else 0
+		if duration == 0 {
 			log.errorf("could not parse provided duration: %s", opts.watch)
 			os.exit(69)
 		}
 	}
 
+	if opts.watch != "" {
+		for true {
+			start := time.now()
+			work()
+			end := time.now()
+			diff := time.diff(start, end)
+			time.sleep(duration - diff)
+		}
+	} else {
+		work()
+	}
+}
+
+work :: proc() {
 	connections := get_connections(opts.use_udp)
 
 	if len(connections.connections) == 0 {
