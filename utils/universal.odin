@@ -13,7 +13,6 @@ string_to_duration :: proc(input: string) -> Maybe(time.Duration) {
 		return nil
 	}
 
-	// dynamic litteral allocates using context.allocator
 	suffix_map := make(map[string]time.Duration, 4)
 	suffix_map["ms"] = time.Millisecond
 	suffix_map["s"] = time.Second
