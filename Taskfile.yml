@@ -21,7 +21,7 @@ tasks:
       - /**/*.c
       - /**/*.cpp
       - /**/*.odin
-      - krobe.rc
+      - assets/krobe.rc
     deps:
       - build:libs
     cmds:
@@ -30,7 +30,7 @@ tasks:
   run:
     cmds:
       - task: build:libs
-      - odin run . -resource:krobe.rc
+      - odin run . -resource:assets/krobe.rc
       - task: del:temp:{{OS}}
 
   del:temp:windows:

@@ -156,12 +156,15 @@ main :: proc() {
 	}
 
 	if opts.watch != "" {
-		for true {
+		for {
 			start := time.now()
 			work()
 			end := time.now()
 			diff := time.diff(start, end)
-			time.sleep(duration - diff)
+			sleep := duration - diff
+			if sleep > 0 {
+				time.sleep(duration - diff)
+			}
 		}
 	} else {
 		work()
