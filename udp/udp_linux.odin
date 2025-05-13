@@ -12,7 +12,7 @@ UdpEndpointInfo :: struct {
 
 UdpEndpoints :: struct {
     count: c.uint32_t,
-    endpoints: UdpEndpointInfo
+    endpoints: ^UdpEndpointInfo
 }
 
 foreign import lib "../bin/krobe.a"
