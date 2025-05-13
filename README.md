@@ -31,7 +31,7 @@ This task is configured to automatically build for your host platform.
 If all prerequisites are met, this will compile Krobe and output `krobe[exe ext]` in the `bin/` directory.
 
 > [!IMPORTANT]
-> There is currently very early Linux support, krobe compiles on Linux and technically works, but I do not have access to any real linux desktop to test it, so full is not guaranteed
+> There is currently very early Linux support, krobe compiles on Linux and technically works, but I do not have access to any real linux desktop to test it, so full functionality is not guaranteed
 
 ## Features
 
