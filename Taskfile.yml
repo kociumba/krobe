@@ -24,9 +24,12 @@ tasks:
     generates:
       - bin/krobe{{exeExt}}
     sources:
-      - /**/*.c
-      - /**/*.cpp
-      - /**/*.odin
+      - /c/*.c
+      - /cpp/*.cpp
+      - /*.odin
+      - /tcp/*.odin
+      - /udp/*.odin
+      - /utils/*.odin
       - assets/krobe.rc
     cmds:
       - task: build:libs:{{OS}}
@@ -58,8 +61,8 @@ tasks:
     generates:
       - bin/krobe.lib
     sources:
-      - /**/*.c
-      - /**/*.cpp
+      - /c/*.c
+      - /cpp/*.cpp
     silent: true
     cmds:
       - task: pre:build
@@ -69,13 +72,9 @@ tasks:
     generates:
       - bin/krobe.a
     sources:
-      - /**/*.c
-      - /**/*.cpp
+      - /c/*.c
+      - /cpp/*.cpp
     silent: false
     cmds:
       - task: pre:build
-      - ./linux_gcc_build.sh
-
-  get:vars:
-    cmds:
-      - echo "OS={{OS}}, exeExt={{exeExt}}"
+      - bash ./linux_gcc_build.sh
