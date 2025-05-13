@@ -1,20 +1,6 @@
 package tcp
 
-import win "core:sys/windows"
-
-TcpConnectionInfo :: struct {
-	state:       win.DWORD, // TCP connection state
-	local_addr:  win.DWORD, // Local address in network byte order
-	local_port:  win.WORD, // Local port in host byte order
-	remote_addr: win.DWORD, // Remote address in network byte order
-	remote_port: win.WORD, // Remote port in host byte order
-	pid:         win.DWORD, // Process ID
-}
-
-TcpConnections :: struct {
-	count:       win.DWORD, // Number of connections
-	connections: ^TcpConnectionInfo, // Array of connections
-}
+import "core:c"
 
 TCP_STATE_CLOSED :: 1
 TCP_STATE_LISTEN :: 2
@@ -29,18 +15,27 @@ TCP_STATE_LAST_ACK :: 10
 TCP_STATE_TIME_WAIT :: 11
 TCP_STATE_DELETE_TCB :: 12
 
-foreign import "system:iphlpapi.lib"
-foreign import "system:ws2_32.lib"
-foreign import "system:user32.lib"
-foreign import lib "../bin/krobe.lib"
+TcpConnectionInfo :: struct {
+	state:       c.uint32_t,
+	local_addr:  c.uint32_t,
+	local_port:  c.uint16_t,
+	remote_addr: c.uint32_t,
+	remote_port: c.uint16_t,
+	pid:         c.uint32_t,
+}
+
+TcpConnections :: struct {
+	count:       c.uint32_t,
+	connections: ^TcpConnectionInfo,
+}
+
+foreign import lib "../bin/krobe.a"
 foreign lib {
 	get_tcp_connections :: proc() -> ^TcpConnections ---
 	free_tcp_connections :: proc(connections: ^TcpConnections) ---
-	print_tcp_connections :: proc(connections: ^TcpConnections) ---
-	get_hwnd :: proc(process_id: win.DWORD) -> win.HWND ---
 }
 
-get_tcp_state_string :: proc(state: win.DWORD) -> string {
+get_tcp_state_string :: proc(state: c.uint32_t) -> string {
 	switch state {
 	case TCP_STATE_CLOSED:
 		return "CLOSED"

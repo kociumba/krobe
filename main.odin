@@ -45,9 +45,9 @@ get_connections :: proc(use_udp: bool) -> (result: Connections) {
 		for i := 0; i < int(udp_endpoints.count); i += 1 {
 			result.connections[i] = {
 				local_addr  = udp_slice[i].local_addr,
-				local_port  = udp_slice[i].local_port,
+				local_port  = u32(udp_slice[i].local_port),
 				remote_addr = udp_slice[i].remote_addr,
-				remote_port = udp_slice[i].remote_port,
+				remote_port = u32(udp_slice[i].remote_port),
 				pid         = udp_slice[i].pid,
 				state       = 0, // UDP doesn't have states
 			}
@@ -94,53 +94,33 @@ validate_watch_duration :: proc(
 	name: string,
 	value: any,
 	args_tag: string,
-) -> (error: string) {
-    defer free_all(context.allocator)
+) -> (
+	error: string,
+) {
+	defer free_all(context.allocator)
 
-    if name == "watch" {
-        v := value.(string)
-        if utils.string_to_duration(v) == nil {
-            error = fmt.aprintf("incorrect duration string for -watch got: %s, valid example: 20s, 5m", v)
-        }
-    }
+	if name == "watch" {
+		v := value.(string)
+		if utils.string_to_duration(v) == nil {
+			error = fmt.aprintf(
+				"incorrect duration string for -watch got: %s, valid example: 20s, 5m",
+				v,
+			)
+		}
+	}
 
-    return
+	return
 }
 
 @(test)
 main_test :: proc(t: ^testing.T) {
 	defer free_all(context.allocator)
+	l := log.create_console_logger(log.Level.Debug)
+	context.logger = l
 
-	connections := tcp.get_tcp_connections()
-	if connections == nil {
-		log.error("Failed to get TCP connections!")
-		return
-	}
+    opts.use_json =  true
 
-	log.info(connections)
-
-	// fmt.printf("Total TCP connections: %d\n", connections.count)
-	// fmt.println("------------------------------------------------------")
-	// fmt.println("  Local Address:Port    Remote Address:Port    State    PID")
-	// fmt.println("------------------------------------------------------")
-
-	// conn_slice := slice.from_ptr(connections.connections, int(connections.count))
-	// for conn in conn_slice {
-	// 	local_ip := ipv4_to_string(conn.local_addr)
-	// 	remote_ip := ipv4_to_string(conn.remote_addr)
-
-	// 	fmt.printf(
-	// 		"%15s:%-5d %15s:%-5d %12s %5d\n",
-	// 		local_ip,
-	// 		conn.local_port,
-	// 		remote_ip,
-	// 		conn.remote_port,
-	// 		get_tcp_state_string(conn.state),
-	// 		conn.pid,
-	// 	)
-	// }
-
-	tcp.free_tcp_connections(connections)
+    work()
 }
 
 // the struct outputed in an array when -json is set
@@ -155,7 +135,7 @@ main :: proc() {
 	defer free_all(context.allocator)
 
 	style: flags.Parsing_Style = .Odin
-    flags.register_flag_checker(validate_watch_duration)
+	flags.register_flag_checker(validate_watch_duration)
 	flags.parse_or_exit(&opts, os.args, style)
 
 	l := log.create_console_logger(log.Level.Info)
@@ -219,21 +199,35 @@ work :: proc() {
 				r = filepath.base(r.?)
 			}
 			if opts.use_json {
+				title: Maybe(string)
+				when ODIN_OS == .Windows {
+					title = utils.get_window_title(tcp.get_hwnd(conn.pid))
+				} else {
+					title = "[not supported on linux]"
+				}
+
 				append(
 					&json_struct,
 					json_out {
 						port = int(conn.local_port),
 						pid = int(conn.pid),
-						title = utils.get_window_title(tcp.get_hwnd(conn.pid)),
+						title = title,
 						path = r.?,
 					},
 				)
 			} else {
+				title: string
+				when ODIN_OS == .Windows {
+					title = utils.get_window_title(tcp.get_hwnd(conn.pid)).? or_else "[no window]"
+				} else {
+					title = "[not supported on linux]"
+				}
+
 				fmt.printf(
 					"port: %#v, pid: %#v (title: %#v), path: %#v\n",
 					conn.local_port,
 					conn.pid,
-					utils.get_window_title(tcp.get_hwnd(conn.pid)).? or_else "[no window]",
+					title,
 					r,
 				)
 			}
@@ -246,6 +240,6 @@ work :: proc() {
 		if err != nil {
 			log.error(err)
 		}
-		fmt.printf("%s", data)
+		fmt.printf("%s\n", data)
 	}
 }

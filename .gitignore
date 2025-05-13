@@ -4,3 +4,6 @@
 .task
 *.res
 *.obj
+*.o
+*.a
+bin/*

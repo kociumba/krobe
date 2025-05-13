@@ -14,38 +14,83 @@ tasks:
     cmds:
       - pwsh -NoProfile -Command "mkdir bin -Force | Out-Null"
 
+  pre:build:linux:
+    silent: false
+    internal: true
+    cmds:
+      - mkdir -p bin 
+
   build:
     generates:
       - bin/krobe{{exeExt}}
     sources:
-      - /**/*.c
-      - /**/*.cpp
-      - /**/*.odin
+      - /c/*.c
+      - /cpp/*.cpp
+      - /*.odin
+      - /tcp/*.odin
+      - /udp/*.odin
+      - /utils/*.odin
       - assets/krobe.rc
-    deps:
-      - build:libs
+    cmds:
+      - task: build:libs:{{OS}}
+      - task: build:odin:{{OS}}
+
+  build:odin:windows:
+    silent: true
     cmds:
       - odin build . -out:bin/krobe{{exeExt}} -o:speed -resource:assets/krobe.rc
 
+  build:odin:linux:
+    silent: false
+    cmds:
+      - odin build . -out:bin/krobe{{exeExt}} -o:speed
+
   run:
     cmds:
-      - task: build:libs
-      - odin run . -resource:assets/krobe.rc
+      - task: build:libs:{{OS}}
+      - task: run:odin:{{OS}}
       - task: del:temp:{{OS}}
+
+  run:odin:windows:
+    silent: true
+    cmds:
+      - odin run . -resource:assets/krobe.rc
+
+  run:odin:linux:
+    silent: true
+    cmds:
+      - odin run .
 
   del:temp:windows:
     silent: true
     internal: true
     cmds:
       - pwsh -NoProfile -Command "del krobe{{exeExt}}"
+  
+  del:temp:linux:
+    silent: true
+    internal: true
+    cmds:
+      - rm krobe{{exeExt}}
 
-  build:libs:
+  build:libs:windows:
     generates:
       - bin/krobe.lib
     sources:
-      - /**/*.c
-      - /**/*.cpp
+      - /c/*.c
+      - /cpp/*.cpp
     silent: true
     cmds:
       - task: pre:build
       - pwsh -NoProfile -ExecutionPolicy Bypass -File "./win_vs_build.ps1" -Target all -WorkingDir "{{.USER_WORKING_DIR}}"
+
+  build:libs:linux:
+    generates:
+      - bin/krobe.a
+    sources:
+      - /c/*.c
+      - /cpp/*.cpp
+    silent: false
+    cmds:
+      - task: pre:build
+      - bash ./linux_gcc_build.sh
