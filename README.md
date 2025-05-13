@@ -1,18 +1,24 @@
 # krobe
 
-krobe is a cli app that aims to make collecting data about open and active local connections easy. 
+krobe is a cli app that aims to make collecting data about open and active connections easy. 
 
-It is a small, native executable that works on Windows without any dependencies, using raw win32 and odin standard library.
-As a result, the executable size is kept tiny, around ~650kb on windows.
+It is a small, native executable that works on Windows(linux in early support) without any dependencies, using raw platform apis and odin standard library.
+As a result, the executable size is kept tiny, around ~650kb on windows and ~330kb on linux.
 
-Right now, krobe supports TCP/UDP IPv4 connections only (it's the most commonly used type for local data exchange)
+Right now, krobe supports TCP/UDP IPv4 connections only (it's the most commonly used type for any type of data exchange)
 
 To build krobe yoursefl, you need the following prerequisites on your system:
 
-- Visual Studio Build Tools
+- windows specific dependencies:
+  - Visual Studio Build Tools
+  - PowerShell (5.1 or higher)
+
+- linux specific dependencies:
+  - c/c++ build tools(gcc, g++, ar)
+  - any bash compatible shell
+
 - Odin (dev-2025-04 or later)
 - Taskfile
-- PowerShell (5.1 or higher)
 
 To build the project, navigate to the repository root and run:
 
@@ -20,9 +26,12 @@ To build the project, navigate to the repository root and run:
 task build
 ```
 
-If all prerequisites are met, this will compile Krobe and output `krobe.exe` in the `bin/` directory.
+This task is configured to automatically build for your current native platform.
 
-Other platforms aside from windows are not supported yet, but there are plans to work towards cross-platform support
+If all prerequisites are met, this will compile Krobe and output `krobe[exe ext]` in the `bin/` directory.
+
+> [!IMPORTANT]
+> There is currently very early linux support, krobe compiles on linux, technically works, but I do not have access to any real linux desktop which could be used to test krobe, so full or any functionality is not guaranteed
 
 ## Features
 

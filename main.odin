@@ -240,6 +240,6 @@ work :: proc() {
 		if err != nil {
 			log.error(err)
 		}
-		fmt.printf("%s", data)
+		fmt.printf("%s\n", data)
 	}
 }
