@@ -1,9 +1,5 @@
 package tcp
 
-import "core:fmt"
-import "core:log"
-import "core:slice"
-import "core:strings"
 import win "core:sys/windows"
 
 TcpConnectionInfo :: struct {
