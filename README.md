@@ -1,19 +1,19 @@
 # krobe
 
-krobe is a cli app that aims to make collecting data about open and active connections easy. 
+krobe is a CLI app that aims to make collecting data about open and active connections easy. 
 
-It is a small, native executable that works on Windows(linux in early support) without any dependencies, using raw platform apis and odin standard library.
+It is a small, native executable that works on Windows (Linux in early support) without any dependencies, using raw platform APIs.
 As a result, the executable size is kept tiny, around ~650kb on windows and ~330kb on linux.
 
-Right now, krobe supports TCP/UDP IPv4 connections only (it's the most commonly used type for any type of data exchange)
+Currently, krobe supports TCP/UDP IPv4 connections only (it's the most commonly used type for any data exchange)
 
 To build krobe yoursefl, you need the following prerequisites on your system:
 
-- windows specific dependencies:
+- Windows specific dependencies:
   - Visual Studio Build Tools
   - PowerShell (5.1 or higher)
 
-- linux specific dependencies:
+- Linux specific dependencies:
   - c/c++ build tools(gcc, g++, ar)
   - any bash compatible shell
 
@@ -26,12 +26,12 @@ To build the project, navigate to the repository root and run:
 task build
 ```
 
-This task is configured to automatically build for your current native platform.
+This task is configured to automatically build for your host platform.
 
 If all prerequisites are met, this will compile Krobe and output `krobe[exe ext]` in the `bin/` directory.
 
 > [!IMPORTANT]
-> There is currently very early linux support, krobe compiles on linux, technically works, but I do not have access to any real linux desktop which could be used to test krobe, so full or any functionality is not guaranteed
+> There is currently very early Linux support, krobe compiles on Linux and technically works, but I do not have access to any real linux desktop to test it, so full is not guaranteed
 
 ## Features
 
