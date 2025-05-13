@@ -118,6 +118,8 @@ main_test :: proc(t: ^testing.T) {
 	l := log.create_console_logger(log.Level.Debug)
 	context.logger = l
 
+    opts.use_json =  true
+
     work()
 }
 

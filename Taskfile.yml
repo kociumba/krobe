@@ -48,14 +48,30 @@ tasks:
   run:
     cmds:
       - task: build:libs:{{OS}}
-      - odin run . -resource:assets/krobe.rc
+      - task: run:odin:{{OS}}
       - task: del:temp:{{OS}}
+
+  run:odin:windows:
+    silent: true
+    cmds:
+      - odin run . -resource:assets/krobe.rc
+
+  run:odin:linux:
+    silent: true
+    cmds:
+      - odin run .
 
   del:temp:windows:
     silent: true
     internal: true
     cmds:
       - pwsh -NoProfile -Command "del krobe{{exeExt}}"
+  
+  del:temp:linux:
+    silent: true
+    internal: true
+    cmds:
+      - rm krobe{{exeExt}}
 
   build:libs:windows:
     generates:
