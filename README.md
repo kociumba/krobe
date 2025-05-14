@@ -3,7 +3,7 @@
 krobe is a CLI app that aims to make collecting data about open and active connections easy. 
 
 It is a small, native executable that works on Windows (Linux in early support) without any dependencies, using raw platform APIs.
-As a result, the executable size is kept tiny, around ~650kb on windows and ~330kb on linux.
+As a result, the executable size is kept tiny, around ~727kb on windows and ~407kb on linux.
 
 Currently, krobe supports TCP/UDP IPv4 connections only (it's the most commonly used type for any data exchange)
 
