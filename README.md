@@ -43,5 +43,8 @@ You can modify the behaviour of krobe with flags:
 - `-full` - prints the full absolute paths instead of only the executable names
 - `-watch:<string>` - allows you to provide a duration string like 20s, 5m, 100ms; krobe will then run on a timer of that duration and print new data every time
 - `-search:<string>` - allows you to provide a regex string to match against found executable paths, for example `-search:[Ss]potify` would only output processes related to spotify
+- `-ci` - used in conjunction with `-search`, if `-ci` is used, the regex becomes case insensitive, example: 
+  - no `-ci` to match "Spotify.exe" you need `[Ss]potify` or `Spotify`
+  - with `-ci` to match "Spotify.exe" you can use `spotify`
 
 You can also get info on these flags using `-h` or `-help`, which prints a help card with this info

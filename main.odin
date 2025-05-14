@@ -89,6 +89,7 @@ Options :: struct {
 	use_json: bool `args:"name=json" usage:"if true, outputs the data in a json format, for piping into other programs"`,
 	watch:    string `args:"name=watch" usage:"if set krobe will collect data on this set interval, the value is a string representing a duration, for example 20s"`,
 	search:   string `args:"name=search" usage:"provide a regex that should be used to filter output results, if your regex requires spaces wrap it in 'quotes'"`,
+	use_ci:   bool `args:"name=ci" usage:"if set the -search regex matching will be case insensitive"`,
 }
 
 opts: Options
@@ -130,7 +131,7 @@ validate_search_regex :: proc(
 		v := value.(string)
 		v = utils.trim_both_sides(v, "\"")
 		v = utils.trim_both_sides(v, "\'")
-		_, err := regex.create(v, {.Global})
+		_, err := regex.create(v) // we don't need the regex options here
 		if err != nil {
 			return fmt.aprintf("provided regex pattern could not be compiled, pattern: %s", v)
 		}
@@ -216,12 +217,18 @@ work :: proc() {
 	}
 
 	reg: regex.Regular_Expression
+    reg_flags: regex.Flags
 	err: regex.Error
 	defer regex.destroy(reg)
 	if opts.search != "" {
+        if opts.use_ci {
+            reg_flags = {.Case_Insensitive, .Global}
+        } else {
+            reg_flags = {.Global}
+        }
 		pattern := utils.trim_both_sides(opts.search, "\"")
 		pattern = utils.trim_both_sides(pattern, "\'")
-		reg, err = regex.create(pattern, {.Global})
+		reg, err = regex.create(pattern, reg_flags)
 		if err != nil {
 			log.fatalf("failed to compile the provided regex pattern, pattern: %s", pattern)
 		}
