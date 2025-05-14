@@ -19,11 +19,9 @@ get_proc_info :: proc(pid: u32) -> Maybe(string) {
 	if bytes_read < 0 {
 		err := posix.Errno(-bytes_read)
 
-		if err == posix.Errno.EACCES {
-			log.errorf("Permission denied for PID %d: you may need to run as root", pid)
-		} else {
+        if err != posix.Errno.NONE {
 			err_str := posix.strerror(err)
-			log.errorf("Failed to read process info for PID %d: %s", pid, err_str)
+			log.warnf("Failed to read process info for PID %d: %s", pid, err_str)
 		}
 		return nil
 	}

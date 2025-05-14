@@ -1,5 +1,6 @@
 package main
 
+import "base:runtime"
 import "core:c"
 import "core:encoding/json"
 import "core:flags"
@@ -8,7 +9,9 @@ import "core:log"
 import "core:os"
 import "core:path/filepath"
 import "core:slice"
+import "core:strings"
 import "core:testing"
+import "core:text/regex"
 import "core:time"
 import "tcp"
 import "udp"
@@ -85,6 +88,8 @@ Options :: struct {
 	use_full: bool `args:"name=full" usage:"if true, includes full absolute paths to found executables"`,
 	use_json: bool `args:"name=json" usage:"if true, outputs the data in a json format, for piping into other programs"`,
 	watch:    string `args:"name=watch" usage:"if set krobe will collect data on this set interval, the value is a string representing a duration, for example 20s"`,
+	search:   string `args:"name=search" usage:"provide a regex that should be used to filter output results, if your regex requires spaces wrap it in 'quotes'"`,
+	use_ci:   bool `args:"name=ci" usage:"if set the -search regex matching will be case insensitive"`,
 }
 
 opts: Options
@@ -112,15 +117,38 @@ validate_watch_duration :: proc(
 	return
 }
 
+validate_search_regex :: proc(
+	model: rawptr,
+	name: string,
+	value: any,
+	args_tag: string,
+) -> (
+	error: string,
+) {
+	defer free_all(context.allocator)
+
+	if name == "search" {
+		v := value.(string)
+		v = utils.trim_both_sides(v, "\"")
+		v = utils.trim_both_sides(v, "\'")
+		_, err := regex.create(v) // we don't need the regex options here
+		if err != nil {
+			return fmt.aprintf("provided regex pattern could not be compiled, pattern: %s", v)
+		}
+	}
+
+	return
+}
+
 @(test)
 main_test :: proc(t: ^testing.T) {
 	defer free_all(context.allocator)
 	l := log.create_console_logger(log.Level.Debug)
 	context.logger = l
 
-    opts.use_json =  true
+	opts.use_json = true
 
-    work()
+	work()
 }
 
 // the struct outputed in an array when -json is set
@@ -131,17 +159,26 @@ json_out :: struct {
 	path:  string,
 }
 
+RELEASE :: #config(RELEASE, false)
+
 main :: proc() {
 	defer free_all(context.allocator)
 
 	style: flags.Parsing_Style = .Odin
 	flags.register_flag_checker(validate_watch_duration)
+	flags.register_flag_checker(validate_search_regex)
 	flags.parse_or_exit(&opts, os.args, style)
 
-	l := log.create_console_logger(log.Level.Info)
+	log_opts: bit_set[runtime.Logger_Option]
+	when RELEASE {
+		log_opts = log.Options{.Level, .Terminal_Color, .Time} // disables file location data for logging in production
+	} else {
+		log_opts = log.Default_Console_Logger_Opts
+	}
+	l := log.create_console_logger(log.Level.Info, log_opts)
 	// disable logging when json output is enabled for an uninterrupted json stream
 	if opts.use_json {
-		l = log.create_console_logger(log.Level.Fatal)
+		l = log.create_console_logger(log.Level.Fatal, log_opts)
 	}
 	context.logger = l
 
@@ -179,11 +216,31 @@ work :: proc() {
 		os.exit(69)
 	}
 
+	reg: regex.Regular_Expression
+    reg_flags: regex.Flags
+	err: regex.Error
+	defer regex.destroy(reg)
+	if opts.search != "" {
+        if opts.use_ci {
+            reg_flags = {.Case_Insensitive, .Global}
+        } else {
+            reg_flags = {.Global}
+        }
+		pattern := utils.trim_both_sides(opts.search, "\"")
+		pattern = utils.trim_both_sides(pattern, "\'")
+		reg, err = regex.create(pattern, reg_flags)
+		if err != nil {
+			log.fatalf("failed to compile the provided regex pattern, pattern: %s", pattern)
+		}
+	}
+
 	json_struct := make([dynamic]json_out)
 	defer delete(json_struct)
 
 	for conn in connections.connections {
-		if conn.pid == 4 {continue} 	// system process, skip it for now even tho many sevices run under it
+		when ODIN_OS == .Windows {
+			if conn.pid == 4 {continue} 	// system process, skip it for now even tho many sevices run under it
+		}
 
 		should_include :=
 			opts.use_udp ||
@@ -206,6 +263,12 @@ work :: proc() {
 					title = "[not supported on linux]"
 				}
 
+				if r != nil && opts.search != "" {
+					if _, ok := regex.match(reg, r.?); !ok {
+						continue
+					}
+				}
+
 				append(
 					&json_struct,
 					json_out {
@@ -221,6 +284,12 @@ work :: proc() {
 					title = utils.get_window_title(tcp.get_hwnd(conn.pid)).? or_else "[no window]"
 				} else {
 					title = "[not supported on linux]"
+				}
+
+				if r != nil && opts.search != "" {
+					if _, ok := regex.match(reg, r.?); !ok {
+						continue
+					}
 				}
 
 				fmt.printf(

@@ -18,7 +18,7 @@ tasks:
     silent: false
     internal: true
     cmds:
-      - mkdir -p bin 
+      - mkdir -p bin
 
   build:
     generates:
@@ -35,15 +35,40 @@ tasks:
       - task: build:libs:{{OS}}
       - task: build:odin:{{OS}}
 
+  build:release:
+    generates:
+      - bin/krobe{{exeExt}}
+    sources:
+      - /c/*.c
+      - /cpp/*.cpp
+      - /*.odin
+      - /tcp/*.odin
+      - /udp/*.odin
+      - /utils/*.odin
+      - assets/krobe.rc
+    cmds:
+      - task: build:libs:{{OS}}
+      - task: build:release:odin:{{OS}}
+
   build:odin:windows:
     silent: true
     cmds:
       - odin build . -out:bin/krobe{{exeExt}} -o:speed -resource:assets/krobe.rc
 
+  build:release:odin:windows:
+    silent: true
+    cmds:
+      - odin build . -out:bin/krobe{{exeExt}} -o:speed -resource:assets/krobe.rc -define:RELEASE=true
+
   build:odin:linux:
     silent: false
     cmds:
       - odin build . -out:bin/krobe{{exeExt}} -o:speed
+
+  build:release:odin:linux:
+    silent: false
+    cmds:
+      - odin build . -out:bin/krobe{{exeExt}} -o:speed -define:RELEASE=true
 
   run:
     cmds:
@@ -66,7 +91,7 @@ tasks:
     internal: true
     cmds:
       - pwsh -NoProfile -Command "del krobe{{exeExt}}"
-  
+
   del:temp:linux:
     silent: true
     internal: true

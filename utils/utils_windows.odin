@@ -47,7 +47,7 @@ get_proc_info :: proc(pid: win.DWORD) -> Maybe(string) {
 			// 	}
 			// }
 		}
-		log.errorf(
+		log.warnf(
 			"OpenProcess failed for PID %d: %s",
 			pid,
 			get_win32_error_message(win.GetLastError()),

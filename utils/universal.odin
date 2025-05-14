@@ -33,11 +33,11 @@ string_to_duration :: proc(input: string) -> Maybe(time.Duration) {
 			mult, ok := strconv.parse_int(amount)
 			if !ok {
 				// mult_f, ok_f := strconv.parse_f64(amount) // doesn't work couse odin doesn't like casting floats to i64, may be able to get it to work later with precision loss
-                // if !ok_f {
-                //     return nil
-                // }
-                // return suffix_map[suffix] * time.Duration(mult_f)
-                return nil
+				// if !ok_f {
+				//     return nil
+				// }
+				// return suffix_map[suffix] * time.Duration(mult_f)
+				return nil
 			}
 			return suffix_map[suffix] * time.Duration(mult)
 		}
@@ -55,9 +55,25 @@ string_to_duration_test :: proc(t: ^testing.T) {
 
 	testing.expect_value(t, string_to_duration(" 10ms "), time.Millisecond * 10)
 	testing.expect_value(t, string_to_duration("10 ms"), time.Millisecond * 10)
-	
+
 	testing.expect_value(t, string_to_duration(""), nil)
 	testing.expect_value(t, string_to_duration("slcancla"), nil)
 	testing.expect_value(t, string_to_duration("ms"), nil)
 	testing.expect_value(t, string_to_duration(" "), nil)
+}
+
+// utility mainly for stripping quotes from an enlcosed string
+trim_both_sides :: proc(s: string, pattern: string) -> (r: string) {
+	r = strings.trim_space(s)
+	r = strings.trim_prefix(r, pattern)
+	r = strings.trim_suffix(r, pattern)
+	return
+}
+
+@(test)
+trim_both_sides_test :: proc(t: ^testing.T) {
+	testing.expect_value(t, trim_both_sides("\"gabagool\"", "\""), "gabagool")
+	testing.expect_value(t, trim_both_sides("", "\""), "")
+	testing.expect_value(t, trim_both_sides("gabagool", "\""), "gabagool")
+	testing.expect_value(t, trim_both_sides("  \"gabagool\"  ", "\""), "gabagool")
 }

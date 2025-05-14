@@ -39,7 +39,7 @@ jobs:
       - name: build
         timeout-minutes: 5
         run: |
-          task build
+          task build:release
 
       - name: test # run tests only after building since we need the c/c++ libs to link with
         run: |
