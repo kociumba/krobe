@@ -64,13 +64,16 @@ string_to_duration_test :: proc(t: ^testing.T) {
 
 // utility mainly for stripping quotes from an enlcosed string
 trim_both_sides :: proc(s: string, pattern: string) -> (r: string) {
-    r = strings.trim_space(s)
+	r = strings.trim_space(s)
 	r = strings.trim_prefix(r, pattern)
 	r = strings.trim_suffix(r, pattern)
 	return
 }
 
-@test
+@(test)
 trim_both_sides_test :: proc(t: ^testing.T) {
-    testing.expect_value(t, trim_both_sides("\"gabagool\"", "\""), "gabagool")
+	testing.expect_value(t, trim_both_sides("\"gabagool\"", "\""), "gabagool")
+	testing.expect_value(t, trim_both_sides("", "\""), "")
+	testing.expect_value(t, trim_both_sides("gabagool", "\""), "gabagool")
+	testing.expect_value(t, trim_both_sides("  \"gabagool\"  ", "\""), "gabagool")
 }
